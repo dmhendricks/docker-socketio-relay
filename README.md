@@ -31,7 +31,7 @@ See [Client Side Example Code](https://github.com/dmhendricks/nodejs-simple-mess
 
 ## Usage
 
-Once you have to service running and one or more clients connected, you can send messages to them using your favorite REST client. You can send any data you like as long as it's in JSON. For example, to send a message to the included [demo.html](https://github.com/dmhendricks/docker-socketio-relay/blob/master/demo.html), you could issue the following command:
+Once you have to service running and one or more clients connected, you can send messages to them using [your favorite REST client](https://www.getpostman.com/?utm_source=github.com&utm_medium=campaign&utm_content=referral&utm_campaign=dmhendricks%2Fdocker-socketio-relay). You can send any data you like as long as it's in JSON. For example, to send a message to the included [demo.html](https://github.com/dmhendricks/docker-socketio-relay/blob/master/demo.html), you could issue the following command:
 
 ```bash
 curl --location --request POST 'http://localhost:3000/socket/my-socket-name?api_key=MY_SECRET_API_KEY' \
