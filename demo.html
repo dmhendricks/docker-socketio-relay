@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8" />
+    <title>Simple Message Relay Demo</title>
+    <meta name="description" content="Simple Message Relay Demo" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link href="https://cdn.jsdelivr.net/npm/purecss@1.0.1/build/pure-min.css" rel="stylesheet" />
+    <style type="text/css">
+        body { margin: 1em; }
+        #status {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 0.1em 0.3em;
+            font-size: 0.95em;
+        }
+        #status[data-connected="true"] {
+            color: #155724;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+
+</head>
+<body>
+
+    <main id="content">
+
+        <h2>Simple Message Relay - Browser Demo</h2>
+        <p>See the <a href="https://github.com/dmhendricks/docker-socketio-relay/" target="_blank">GitHub project page</a> for more information.</p>
+        <p>Socket.IO state: <span id="status" class="disconnected">Disconnected</span></p>
+
+        <h3>Messages:</h3>
+        <div id="messages" data-init="true"><em>Waiting...</em></div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/combine/npm/jquery@3/dist/jquery.min.js,npm/socket.io-client@2.3/dist/socket.io.min.js"></script>
+    <script>
+        const url = 'http://127.0.0.1:3000'; // Change to the URI of your Socket.io server
+        const socket = io.connect( url, { reconnection: true } ); // Set false to disable automatic reconnection
+
+        ;(function($) {
+
+            // Initialize Socket.IO
+            var socket_name = 'my-socket-name'; // Name as you wish
+            var status = $( '#status' ), messages = $( '#messages' );
+
+            // Display connection state
+            socket.on( 'connect', function() {
+
+                status.attr( 'data-connected', true ).html( 'Connected' );
+                console.info( 'Connected: ' + socket_name );
+
+            }).on( 'disconnect', function( reason ) {
+
+                status.removeAttr( 'data-connected' ).html( 'Disconnected' );
+                console.info( 'Disconnected: ' + socket_name );
+
+            });
+
+            // Listen for messages from Socket.IO
+            socket.on( socket_name, function( response ) {
+
+                console.log( `Recevied [${socket_name}]`, response );
+
+                if( typeof response.message !== 'undefined' ) {
+                    if( messages.attr( 'data-init' ) ) {
+                        messages.removeAttr( 'data-init' );
+                        messages.html( '' ); // Clear "Waiting..." message
+                    }
+                    messages.append( '<p>' + response.message + '</p>' );
+                }
+
+            });
+
+        })( window.jQuery );
+    </script>
+
+</body>
+</html>
