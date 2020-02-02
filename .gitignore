@@ -1,0 +1,11 @@
+*~
+__MACOSX
+.DS_Store
+Thumbs.db
+*.bak
+*.log
+*.lock
+*.swp
+*.todo
+node_modules/
+package-lock.json
