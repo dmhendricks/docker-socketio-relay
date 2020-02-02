@@ -22,7 +22,7 @@ Issue the following command to run in Docker:
 docker run -p 3000:3000 --name socketio-relay -e API_KEY=MY_SECRET_API_KEY hendridm/socketio-relay
 ```
 
-See [demo.html](https://github.com/dmhendricks/docker-socketio-relay/blob/master/demo.html) for an example of using the Socket.IO browser client to receive messages.
+See [Client Side Example Code](https://github.com/dmhendricks/nodejs-simple-message-relay/wiki/Client-Side-Example-Code) or [demo.html](https://github.com/dmhendricks/docker-socketio-relay/blob/master/demo.html) for an example of using the Socket.IO browser client to receive messages.
 
 ### Environmental Variables
 
@@ -39,6 +39,6 @@ curl --location --request POST 'http://localhost:3000/socket/my-socket-name?api_
     --data-raw '{ "message": "Hello World!" }'
 ```
 
-Note that "my-socket-name" in the endpoint above must match the name of the socket that you are listening to in the client (see demo.html). In this way, you can set different listeners and send different messages to different sockets.
+Note that "my-socket-name" in the endpoint above must match the name of the socket that you are listening to in the client (see [demo.html](https://github.com/dmhendricks/docker-socketio-relay/blob/master/demo.html)). In this way, you can set different listeners and send different messages to different sockets.
 
 [![Analytics](https://ga-beacon.appspot.com/UA-126205765-1/dmhendricks/docker-socketio-relay?flat)](https://ga-beacon.appspot.com/?utm_source=github.com&utm_medium=campaign&utm_content=button&utm_campaign=dmhendricks%2Fdocker-socketio-relay)
