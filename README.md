@@ -27,7 +27,45 @@ See [Client Side Example Code](https://github.com/dmhendricks/nodejs-simple-mess
 ### Environmental Variables
 
 - `API_KEY` - The API key required to send messages to clients.
-- `DEBUG` - Add `-e DEBUG=1` to display incoming messages to the console. 
+- `DEBUG` - Set `DEBUG=1` (or `-e DEBUG=1` in Docker) to display incoming messages to the console.
+- `PORT` - The port the server listens on. Defaults to `3000`.
+
+## Local Development
+
+Requires [Node.js](https://nodejs.org/) 20 or later.
+
+1. Install dependencies:
+
+    ```bash
+    npm install
+    ```
+
+2. Start the server, setting an API key (and optionally enabling debug output):
+
+    ```bash
+    API_KEY=testkey DEBUG=1 npm start
+    ```
+
+    For auto-reload during development, use `npm run dev` (via [nodemon](https://nodemon.io/)) instead.
+
+3. Open a client to listen for messages. You can open [demo.html](demo.html) directly from the filesystem (`file://`) — it works because the server reflects and allows any origin by default, including the `null` origin that `file://` pages send. Serving it over HTTP is still recommended, since it more closely mirrors a real deployment (and keeps working if you later restrict the server to specific origins):
+
+    ```bash
+    npx serve . -l 8080
+    # then open http://localhost:8080/demo.html
+    ```
+
+    Either way, you should see the status indicator turn green ("Connected").
+
+4. Send a test message:
+
+    ```bash
+    curl -X POST 'http://localhost:3000/socket/my-socket-name?api_key=testkey' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{ "message": "Hello World!" }'
+    ```
+
+    The message should appear in the browser demo. The server responds with `401 Unauthorized` if the `api_key` query parameter is missing or does not match.
 
 ## Usage
 
@@ -40,5 +78,3 @@ curl --location --request POST 'http://localhost:3000/socket/my-socket-name?api_
 ```
 
 Note that "my-socket-name" in the endpoint above must match the name of the socket that you are listening to in the client (see [demo.html](https://github.com/dmhendricks/docker-socketio-relay/blob/master/demo.html)). In this way, you can set different listeners and send different messages to different sockets.
-
-[![Analytics](https://ga-beacon.appspot.com/UA-126205765-1/dmhendricks/docker-socketio-relay?flat)](https://ga-beacon.appspot.com/?utm_source=github.com&utm_medium=campaign&utm_content=button&utm_campaign=dmhendricks%2Fdocker-socketio-relay)

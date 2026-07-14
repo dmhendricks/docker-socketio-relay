@@ -1,57 +1,57 @@
 /**
- * NodePop - Simple Node.js server to send and receive messages using Restify and Socket.IO
+ * Simple Node.js server to send and receive messages using Express and Socket.IO
  *
  * @license Apache-2.0
  * @author Daniel M. Hendricks
  * @see {@link http://github.com/dmhendricks/docker-socketio-relay}
  */
 
-const
-    pkg = require( '../package' ),
-    corsMiddleware = require( 'restify-cors-middleware' ),
-    colors = require( 'colors/safe' ),
-    errors = require( 'restify-errors' ),
-    restify = require( 'restify' ),
-    socketio = require( 'socket.io' );
+const http = require( 'node:http' );
+const path = require( 'node:path' );
+const express = require( 'express' );
+const cors = require( 'cors' );
+const pc = require( 'picocolors' );
+const { Server } = require( 'socket.io' );
 
-const
-    server = restify.createServer(),
-    io = socketio.listen( server.server ),
-    cors = corsMiddleware({ origins: [ "*" ] });
+const pkg = require( '../package.json' );
 
-server.use( restify.plugins.queryParser() );
-server.use( restify.plugins.bodyParser() );
-server.use( cors.preflight );
-server.use( cors.actual );
+const PORT = process.env.PORT || 3000;
+const debug = process.env.DEBUG || false;
+const api_key = process.env.API_KEY;
 
-let debug = process.env.DEBUG || false,
-    api_key = process.env.API_KEY;
+const app = express();
+const server = http.createServer( app );
+// Reflect the request origin rather than sending a literal '*', so that
+// credentialed requests (withCredentials) are not rejected by the browser.
+const io = new Server( server, { cors: { origin: true, credentials: true } } );
 
-// Start-up
-console.log( colors.bold( '%s v%s by %s / %s' ), pkg.config.app_name, pkg.version, pkg.author.name, pkg.author.url );
-console.log( 'License: %s / %s', pkg.license, pkg.config.links.license );
-console.log( 'GitHub: ' + pkg.homepage );
-console.log( 'Docker: ' + pkg.config.links.docker );
+app.use( cors({ origin: true, credentials: true }) );
+app.use( express.json() );
 
-if( typeof api_key === 'undefined' || !api_key.length ) console.warn( colors.brightYellow( '[warn] API_KEY is not defined.' ) );
+// Start-up banner
+console.log( pc.bold( `${pkg.config.app_name} v${pkg.version} by ${pkg.author.name} / ${pkg.author.url}` ) );
+console.log( `License: ${pkg.license} / ${pkg.config.links.license}` );
+console.log( `GitHub: ${pkg.homepage}` );
+console.log( `Docker: ${pkg.config.links.docker}` );
+
+if( !api_key ) console.warn( pc.yellow( '[warn] API_KEY is not defined.' ) );
 
 // Static routing
-server.get( '/', ( req, res, next ) => next( new errors.ResourceNotFoundError( 'File Not Found' ) ) );
-server.get( '/favicon.ico', restify.plugins.serveStatic( { directory: __dirname + '/public' } ) );
+app.get( '/', ( req, res ) => res.status( 404 ).json({ code: 'ResourceNotFound', message: 'File Not Found' }) );
+app.get( '/favicon.ico', ( req, res ) => res.sendFile( path.join( __dirname, 'public', 'favicon.ico' ) ) );
 
 // Relay messages to connected clients
-server.post( '/socket/:socket', function( req, res, next ) {
+app.post( '/socket/:socket', ( req, res ) => {
 
-    if( typeof api_key === 'undefined' || !api_key.length || ( typeof req.query.api_key === 'undefined' || api_key !== req.query.api_key ) ) {
-        if( debug ) console.log( colors.red( '[error] Invalid API key from', req.connection.remoteAddress ) );
-        next( new errors.InvalidCredentialsError( 'Unauthorized' ) );
-    } else {
-        if( debug ) console.log( '[msg]', req.body );
-        io.emit( req.params.socket, req.body );
-        res.send( req.body );
-        next();
+    if( !api_key || req.query.api_key !== api_key ) {
+        if( debug ) console.log( pc.red( `[error] Invalid API key from ${req.socket.remoteAddress}` ) );
+        return res.status( 401 ).json({ code: 'InvalidCredentials', message: 'Unauthorized' });
     }
+
+    if( debug ) console.log( '[msg]', req.body );
+    io.emit( req.params.socket, req.body );
+    res.json( req.body );
 
 });
 
-server.listen( 3000, () => console.log( '[init] %s initialized', pkg.name ) );
+server.listen( PORT, () => console.log( '[init] %s initialized on port %d', pkg.name, PORT ) );
