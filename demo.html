@@ -7,9 +7,8 @@
     <meta name="description" content="Simple Message Relay Demo" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <link href="https://cdn.jsdelivr.net/npm/purecss@1.0.1/build/pure-min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" rel="stylesheet" />
     <style type="text/css">
-        body { margin: 1em; }
         #status {
             color: #721c24;
             background-color: #f8d7da;
@@ -27,7 +26,7 @@
 </head>
 <body>
 
-    <main id="content">
+    <main id="content" class="container">
 
         <h2>Simple Message Relay - Browser Demo</h2>
         <p>See the <a href="https://github.com/dmhendricks/docker-socketio-relay/" target="_blank">GitHub project page</a> for more information.</p>
@@ -38,7 +37,7 @@
 
     </main>
 
-    <script src="https://cdn.jsdelivr.net/combine/npm/jquery@3/dist/jquery.min.js,npm/socket.io-client@4/dist/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/combine/npm/jquery@4/dist/jquery.slim.min.js,npm/socket.io-client@4/dist/socket.io.min.js"></script>
     <script>
         const url = 'http://127.0.0.1:3000'; // Change to the URI of your Socket.io server
         const socket = io.connect( url, { reconnection: true } ); // Set false to disable automatic reconnection
