@@ -30,7 +30,7 @@ app.use( express.json() );
 
 // Start-up banner
 console.log( pc.bold( `${pkg.config.app_name} v${pkg.version} by ${pkg.author.name} / ${pkg.author.url}` ) );
-console.log( `License: ${pkg.license} / ${pkg.config.links.license}` );
+console.log( `License: ${pkg.license}` );
 console.log( `GitHub: ${pkg.homepage}` );
 console.log( `Docker: ${pkg.config.links.docker}` );
 

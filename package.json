@@ -1,14 +1,8 @@
 {
     "name": "socketio-relay",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "A simple Node.js server to relay messages to Socket.IO clients",
     "license": "Apache-2.0",
-    "keywords": [
-        "socket.io",
-        "message",
-        "relay",
-        "nodejs"
-    ],
     "author": {
         "name": "Daniel M. Hendricks",
         "url": "https://daniel.hn"
@@ -19,7 +13,6 @@
     "config": {
         "app_name": "Socket.IO Relay",
         "links": {
-            "license": "http://www.apache.org/licenses/LICENSE-2.0",
             "docker": "https://hub.docker.com/r/hendridm/socketio-relay"
         }
     },
@@ -44,6 +37,6 @@
     },
     "repository": {
         "type": "git",
-        "url": "git://github.com/dmhendricks/docker-socketio-relay.git"
+        "url": "git+https://github.com/dmhendricks/docker-socketio-relay.git"
     }
 }
