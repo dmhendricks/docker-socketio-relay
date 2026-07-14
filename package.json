@@ -20,7 +20,7 @@
         "app_name": "Socket.IO Relay",
         "links": {
             "license": "http://www.apache.org/licenses/LICENSE-2.0",
-            "docker": "https://hub.docker.com/r/dmhendricks/socketio-relay"
+            "docker": "https://hub.docker.com/r/hendridm/socketio-relay"
         }
     },
     "bugs": {
@@ -31,7 +31,7 @@
         "dev": "nodemon app/server.js"
     },
     "engines": {
-        "node": ">=20"
+        "node": ">=24"
     },
     "dependencies": {
         "cors": "^2.8.5",
