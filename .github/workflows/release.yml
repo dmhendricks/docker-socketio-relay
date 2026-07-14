@@ -12,8 +12,8 @@ name: Release
 # and nothing is pushed to Docker Hub unless the image actually ran.
 #
 # Required repository secrets:
-#   DOCKERHUB_USERNAME — Docker Hub account (e.g. hendridm)
-#   DOCKERHUB_TOKEN    — a Docker Hub access token (not your password)
+#   DOCKERHUB_USERNAME — Docker Hub account
+#   DOCKERHUB_TOKEN    — a Docker Hub access token
 
 on:
   workflow_dispatch:
