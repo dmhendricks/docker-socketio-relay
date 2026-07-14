@@ -1,0 +1,155 @@
+name: Release
+
+# Two-job layout:
+#
+#   build     — builds the image and runs it, verifying the container boots
+#               and relays a message end-to-end. Never pushes.
+#   publish   — only when there's a tag. Rebuilds with layer caching and
+#               pushes to Docker Hub, tagged from the git tag via
+#               docker/metadata-action.
+#
+# Splitting the two means a broken publish step never hides a broken build,
+# and nothing is pushed to Docker Hub unless the image actually ran.
+#
+# Required repository secrets:
+#   DOCKERHUB_USERNAME — Docker Hub account (e.g. hendridm)
+#   DOCKERHUB_TOKEN    — a Docker Hub access token (not your password)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v1.1.0). Will be created on the current commit if it doesn't already exist."
+        required: true
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: hendridm/socketio-relay
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Build a local image (no push) so we can smoke-test it before publishing.
+      - name: Build image (load locally)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: socketio-relay:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Boot the container and verify the full relay path: auth rejection,
+      # authed POST echo, and a real Socket.IO round-trip to a connected client.
+      - name: Smoke test the image
+        run: |
+          docker run -d --name relay-ci -p 3000:3000 \
+            -e API_KEY=citestkey -e DEBUG=1 socketio-relay:ci
+          # wait for the server to come up
+          attempts=0
+          until curl -sf -o /dev/null "http://localhost:3000/favicon.ico"; do
+            attempts=$((attempts + 1))
+            [ "$attempts" -ge 20 ] && { echo "server did not come up"; docker logs relay-ci; exit 1; }
+            sleep 0.5
+          done
+
+          echo "--- wrong key should be 401 ---"
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+            'http://localhost:3000/socket/x?api_key=WRONG' \
+            -H 'Content-Type: application/json' -d '{}')
+          [ "$code" = "401" ] || { echo "expected 401, got $code"; docker logs relay-ci; exit 1; }
+
+          echo "--- correct key should echo the body (200) ---"
+          out=$(curl -s -X POST \
+            'http://localhost:3000/socket/x?api_key=citestkey' \
+            -H 'Content-Type: application/json' -d '{"ok":true}')
+          echo "$out" | grep -q '"ok":true' || { echo "echo failed: $out"; docker logs relay-ci; exit 1; }
+
+          echo "--- Socket.IO v4 round-trip ---"
+          npm install --no-save socket.io-client@4 >/dev/null 2>&1
+          # shellcheck disable=SC2016  # single quotes are intentional: pass the JS literally, no shell expansion
+          node -e '
+            const { io } = require("socket.io-client");
+            const s = io("http://localhost:3000", { reconnection: false });
+            const SOCKET = "ci-socket";
+            const timer = setTimeout(() => { console.error("TIMEOUT"); process.exit(1); }, 8000);
+            s.on("connect", () => {
+              s.on(SOCKET, (msg) => {
+                if (msg && msg.hello === "world") { clearTimeout(timer); console.log("round-trip OK"); process.exit(0); }
+                console.error("unexpected payload", msg); process.exit(1);
+              });
+              fetch(`http://localhost:3000/socket/${SOCKET}?api_key=citestkey`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hello: "world" })
+              });
+            });
+            s.on("connect_error", (e) => { console.error("connect_error", e.message); process.exit(1); });
+          '
+
+      - name: Show container logs
+        if: always()
+        run: docker logs relay-ci || true
+
+      - name: Tear down
+        if: always()
+        run: docker rm -f relay-ci || true
+
+  publish:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-slim
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Resolve the release tag from either trigger: the manual input on
+      # workflow_dispatch, or the pushed ref name (e.g. v1.2.3) otherwise.
+      - name: Resolve release tag
+        id: tag
+        run: echo "value=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      # Derive image tags from the release tag. v1.2.3 produces
+      # :1.2.3, :1.2, and :latest (the `v` prefix is stripped).
+      - name: Derive image tags
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.tag.outputs.value }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.tag.outputs.value }}
+          flavor: latest=true
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
