@@ -10,6 +10,7 @@
     "homepage": "https://github.com/dmhendricks/docker-socketio-relay/",
     "private": true,
     "main": "app/server.js",
+    "type": "module",
     "config": {
         "app_name": "Socket.IO Relay",
         "links": {

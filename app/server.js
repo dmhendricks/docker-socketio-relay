@@ -6,14 +6,15 @@
  * @see {@link http://github.com/dmhendricks/docker-socketio-relay}
  */
 
-const http = require( 'node:http' );
-const path = require( 'node:path' );
-const express = require( 'express' );
-const cors = require( 'cors' );
-const pc = require( 'picocolors' );
-const { Server } = require( 'socket.io' );
+import { readFileSync } from 'node:fs';
+import { Server } from 'socket.io';
+import http from 'node:http';
+import path from 'node:path';
+import express from 'express';
+import cors from 'cors';
+import pc from 'picocolors';
 
-const pkg = require( '../package.json' );
+const pkg = JSON.parse( readFileSync( new URL( '../package.json', import.meta.url ) ) );
 
 const PORT = process.env.PORT || 3000;
 const debug = process.env.DEBUG || false;
@@ -38,7 +39,7 @@ if( !api_key ) console.warn( pc.yellow( '[warn] API_KEY is not defined.' ) );
 
 // Static routing
 app.get( '/', ( req, res ) => res.status( 404 ).json({ code: 'ResourceNotFound', message: 'File Not Found' }) );
-app.get( '/favicon.ico', ( req, res ) => res.sendFile( path.join( __dirname, 'public', 'favicon.ico' ) ) );
+app.get( '/favicon.ico', ( req, res ) => res.sendFile( path.join( import.meta.dirname, 'public', 'favicon.ico' ) ) );
 
 // Relay messages to connected clients
 app.post( '/socket/:socket', ( req, res ) => {
